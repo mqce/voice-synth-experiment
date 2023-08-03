@@ -12,12 +12,6 @@ Math.moveTowards = function (current, target, amountUp, amountDown) {
   else return Math.max(current - amountDown, target);
 };
 
-Math.gaussian = function () {
-  var s = 0;
-  for (var c = 0; c < 16; c++) s += Math.random();
-  return (s - 8) / 4;
-};
-
 var backCanvas = document.getElementById("backCanvas");
 var backCtx = backCanvas.getContext("2d");
 var tractCanvas = document.getElementById("tractCanvas");
@@ -32,11 +26,6 @@ var palePink = "#FFEEF5";
 
 var UI = {
   width: 600,
-  top_margin: 5,
-  left_margin: 5,
-  inAboutScreen: true,
-  inInstructionsScreen: false,
-  instructionsLine: 0,
   debugText: "",
 
   init: function () {
@@ -44,7 +33,6 @@ var UI = {
     this.mouseTouch = { alive: false, endTime: 0 };
     this.mouseDown = false;
 
-    this.aboutButton = makeButton(460, 392, 140, 30, "about...", true);
     this.alwaysVoiceButton = makeButton(
       460,
       428,
@@ -79,25 +67,6 @@ var UI = {
   draw: function () {
     this.alwaysVoiceButton.draw(tractCtx);
     this.autoWobbleButton.draw(tractCtx);
-    this.aboutButton.draw(tractCtx);
-  },
-
-  instructionsScreenHandleTouch: function (x, y) {
-    if (x >= 35 && x <= 265 && y >= 535 && y <= 570)
-      window.location.href = "http://venuspatrol.nfshost.com";
-    else if (x >= 370 && x <= 570 && y >= 505 && y <= 555)
-      location.reload(false);
-    else {
-      UI.inInstructionsScreen = false;
-      UI.aboutButton.switchedOn = true;
-      AudioSystem.unmute();
-    }
-  },
-
-  write: function (text) {
-    tractCtx.fillText(text, 50, 100 + this.instructionsLine * 22);
-    this.instructionsLine += 1;
-    if (text == "") this.instructionsLine -= 0.3;
   },
 
   buttonsHandleTouchStart: function (touch) {
@@ -105,7 +74,6 @@ var UI = {
     alwaysVoice = this.alwaysVoiceButton.switchedOn;
     this.autoWobbleButton.handleTouchStart(touch);
     autoWobble = this.autoWobbleButton.switchedOn;
-    this.aboutButton.handleTouchStart(touch);
   },
 
   startTouches: function (event) {
@@ -113,21 +81,6 @@ var UI = {
     if (!AudioSystem.started) {
       AudioSystem.started = true;
       AudioSystem.startSound();
-    }
-
-    if (UI.inAboutScreen) {
-      UI.inAboutScreen = false;
-      return;
-    }
-
-    if (UI.inInstructionsScreen) {
-      var touches = event.changedTouches;
-      for (var j = 0; j < touches.length; j++) {
-        var x = ((touches[j].pageX - UI.left_margin) / UI.width) * 600;
-        var y = ((touches[j].pageY - UI.top_margin) / UI.width) * 600;
-      }
-      UI.instructionsScreenHandleTouch(x, y);
-      return;
     }
 
     var touches = event.changedTouches;
@@ -138,8 +91,8 @@ var UI = {
       touch.fricative_intensity = 0;
       touch.alive = true;
       touch.id = touches[j].identifier;
-      touch.x = ((touches[j].pageX - UI.left_margin) / UI.width) * 600;
-      touch.y = ((touches[j].pageY - UI.top_margin) / UI.width) * 600;
+      touch.x = (touches[j].pageX / UI.width) * 600;
+      touch.y = (touches[j].pageY / UI.width) * 600;
       touch.index = TractUI.getIndex(touch.x, touch.y);
       touch.diameter = TractUI.getDiameter(touch.x, touch.y);
       UI.touchesWithMouse.push(touch);
@@ -162,8 +115,8 @@ var UI = {
     for (var j = 0; j < touches.length; j++) {
       var touch = UI.getTouchById(touches[j].identifier);
       if (touch != 0) {
-        touch.x = ((touches[j].pageX - UI.left_margin) / UI.width) * 600;
-        touch.y = ((touches[j].pageY - UI.top_margin) / UI.width) * 600;
+        touch.x = (touches[j].pageX / UI.width) * 600;
+        touch.y = (touches[j].pageY / UI.width) * 600;
         touch.index = TractUI.getIndex(touch.x, touch.y);
         touch.diameter = TractUI.getDiameter(touch.x, touch.y);
       }
@@ -181,26 +134,12 @@ var UI = {
       }
     }
     UI.handleTouches();
-
-    if (!UI.aboutButton.switchedOn) {
-      UI.inInstructionsScreen = true;
-    }
   },
 
   startMouse: function (event) {
     if (!AudioSystem.started) {
       AudioSystem.started = true;
       AudioSystem.startSound();
-    }
-    if (UI.inAboutScreen) {
-      UI.inAboutScreen = false;
-      return;
-    }
-    if (UI.inInstructionsScreen) {
-      var x = ((event.pageX - tractCanvas.offsetLeft) / UI.width) * 600;
-      var y = ((event.pageY - tractCanvas.offsetTop) / UI.width) * 600;
-      UI.instructionsScreenHandleTouch(x, y);
-      return;
     }
 
     var touch = {};
@@ -235,8 +174,6 @@ var UI = {
     touch.alive = false;
     touch.endTime = time;
     UI.handleTouches();
-
-    if (!UI.aboutButton.switchedOn) UI.inInstructionsScreen = true;
   },
 
   handleTouches: function (event) {
