@@ -37,12 +37,8 @@ var time = 0;
 var temp = {a:0, b:0};
 var alwaysVoice = true;
 var autoWobble = true;
-var noiseFreq = 500;
-var noiseQ = 0.7;
 var palePink = "#FFEEF5";
-var isFirefox = false;
-var browser=navigator.userAgent.toLowerCase();
-if (browser.indexOf('firefox') > -1) isFirefox = true;
+
 
 var UI = 
 { 
@@ -83,104 +79,8 @@ var UI =
       this.alwaysVoiceButton.draw(tractCtx);
       this.autoWobbleButton.draw(tractCtx);
       this.aboutButton.draw(tractCtx);
-      if (this.inAboutScreen) this.drawAboutScreen();
-      else if (this.inInstructionsScreen) this.drawInstructionsScreen();
-  },
-  
-  drawAboutScreen :  function()
-  {
-      var ctx = tractCtx;
-      ctx.globalAlpha = 0.8;
-      ctx.fillStyle = "white";
-      ctx.rect(0,0,600,600);
-      ctx.fill();   
-  
-      this.drawAboutText();
-  },
-  
-  drawAboutText : function()
-  {
-      var ctx = tractCtx;
-      ctx.globalAlpha = 1.0;
-      ctx.fillStyle = "#C070C6";
-      ctx.strokeStyle = "#C070C6";
-      ctx.font="50px Arial";
-      ctx.lineWidth = 3;
-      ctx.textAlign = "center";
-      ctx.strokeText("P i n k   T r o m b o n e", 300, 230);
-      ctx.fillText("P i n k   T r o m b o n e", 300, 230);
-      
-      ctx.font="28px Arial";
-      ctx.fillText("bare-handed  speech synthesis", 300, 330);
-
-      ctx.font="20px Arial";        
-      //ctx.fillText("(tap to start)", 300, 380);   
-
-      if (isFirefox) 
-      {
-          ctx.font="20px Arial";        
-          ctx.fillText("(sorry - may work poorly with the Firefox browser)", 300, 430);  
-      }
   },
 
-  
-  drawInstructionsScreen :  function()
-  {
-      AudioSystem.mute();
-      var ctx = tractCtx;
-      ctx.globalAlpha = 0.85;
-      ctx.fillStyle = "white";
-      ctx.rect(0,0,600,600);
-      ctx.fill();   
-      
-      ctx.globalAlpha = 1.0;
-      ctx.fillStyle = "#C070C6";
-      ctx.strokeStyle = "#C070C6";
-      ctx.font="24px Arial";
-      ctx.lineWidth = 2;
-      ctx.textAlign = "center";
-      
-      ctx.font = "19px Arial";
-      ctx.textAlign = "left";
-      this.instructionsLine = 0;
-      this.write("Sound is generated in the glottis (at the bottom left) then ");
-      this.write("filtered by the shape of the vocal tract. The voicebox ");
-      this.write("controls the pitch and intensity of the initial sound.");
-      this.write("");
-      this.write("Then, to talk:");
-      this.write("");
-      this.write("- move the body of the tongue to shape vowels");
-      this.write("");
-      this.write("- touch the oral cavity to narrow it, for fricative consonants");
-      this.write("");
-      this.write("- touch above the oral cavity to close it, for stop consonants");
-      this.write("");
-      this.write("- touch the nasal cavity to open the velum and let sound ");
-      this.write("   flow through the nose.");
-      this.write("");
-      this.write("");
-      this.write("(tap anywhere to continue)");
-      
-      ctx.textAlign = "center";
-      ctx.fillText("[tap here to RESET]", 470, 535);
-      
-      this.instructionsLine = 18.8;
-      ctx.textAlign = "left";
-      this.write("Pink Trombone v1.1");
-      this.write("by Neil Thapen");
-      ctx.fillStyle = "blue";
-      ctx.globalAlpha = 0.6;
-      this.write("venuspatrol.nfshost.com");
-      
-      /*ctx.beginPath();
-      ctx.rect(35, 535, 230, 35);
-      ctx.rect(370, 505, 200, 50);
-      ctx.fill();*/
-      
-      ctx.globalAlpha = 1.0;
-  },
-
-  
   instructionsScreenHandleTouch : function(x,y)
   {
       if ((x >=35 && x<=265) && (y>=535 && y<=570)) window.location.href = "http://venuspatrol.nfshost.com";
