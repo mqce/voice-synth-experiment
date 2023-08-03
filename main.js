@@ -20,9 +20,17 @@ var tractCtx = tractCanvas.getContext("2d");
 var sampleRate;
 var time = 0;
 var temp = { a: 0, b: 0 };
+
+
 var alwaysVoice = true;
 var autoWobble = true;
-var palePink = "#FFEEF5";
+
+document.querySelector('[name="autoVoice"]').addEventListener('change', e => {
+  alwaysVoice = e.target.checked;
+});
+document.querySelector('[name="autoWobble"]').addEventListener('change', e => {
+  autoWobble = e.target.checked;
+});
 
 var UI = {
   width: 600,
@@ -32,16 +40,6 @@ var UI = {
     this.touchesWithMouse = [];
     this.mouseTouch = { alive: false, endTime: 0 };
     this.mouseDown = false;
-
-    this.alwaysVoiceButton = makeButton(
-      460,
-      428,
-      140,
-      30,
-      "always voice",
-      true
-    );
-    this.autoWobbleButton = makeButton(460, 464, 140, 30, "pitch wobble", true);
 
     tractCanvas.addEventListener("touchstart", UI.startTouches);
     tractCanvas.addEventListener("touchmove", UI.moveTouches);
@@ -64,18 +62,6 @@ var UI = {
     document.addEventListener("mousemove", UI.moveMouse);
   },
 
-  draw: function () {
-    this.alwaysVoiceButton.draw(tractCtx);
-    this.autoWobbleButton.draw(tractCtx);
-  },
-
-  buttonsHandleTouchStart: function (touch) {
-    this.alwaysVoiceButton.handleTouchStart(touch);
-    alwaysVoice = this.alwaysVoiceButton.switchedOn;
-    this.autoWobbleButton.handleTouchStart(touch);
-    autoWobble = this.autoWobbleButton.switchedOn;
-  },
-
   startTouches: function (event) {
     event.preventDefault();
     if (!AudioSystem.started) {
@@ -96,7 +82,6 @@ var UI = {
       touch.index = TractUI.getIndex(touch.x, touch.y);
       touch.diameter = TractUI.getDiameter(touch.x, touch.y);
       UI.touchesWithMouse.push(touch);
-      UI.buttonsHandleTouchStart(touch);
     }
 
     UI.handleTouches();
@@ -154,7 +139,6 @@ var UI = {
     touch.diameter = TractUI.getDiameter(touch.x, touch.y);
     UI.mouseTouch = touch;
     UI.touchesWithMouse.push(touch);
-    UI.buttonsHandleTouchStart(touch);
     UI.handleTouches();
   },
 
@@ -330,18 +314,6 @@ var Glottis = {
   },
 
   drawKeyboard: function () {
-    this.ctx.strokeStyle = palePink;
-    this.ctx.fillStyle = palePink;
-    backCtx.globalAlpha = 1.0;
-    backCtx.lineCap = "round";
-    backCtx.lineJoin = "round";
-
-    var radius = 2;
-
-    this.drawBar(0.0, 0.4, 8);
-    backCtx.globalAlpha = 0.7;
-    this.drawBar(0.52, 0.72, 8);
-
     backCtx.strokeStyle = "orchid";
     backCtx.fillStyle = "orchid";
     for (var i = 0; i < this.semitones; i++) {
@@ -375,55 +347,6 @@ var Glottis = {
     backCtx.globalAlpha = 0.7;
     backCtx.fillText("voicebox control", 300, 490);
     backCtx.fillText("pitch", 300, 592);
-    backCtx.globalAlpha = 0.3;
-    backCtx.strokeStyle = "orchid";
-    backCtx.fillStyle = "orchid";
-    backCtx.save();
-    backCtx.translate(410, 587);
-    this.drawArrow(80, 2, 10);
-    backCtx.translate(-220, 0);
-    backCtx.rotate(Math.PI);
-    this.drawArrow(80, 2, 10);
-    backCtx.restore();
-    backCtx.globalAlpha = 1.0;
-  },
-
-  drawBar: function (topFactor, bottomFactor, radius) {
-    backCtx.lineWidth = radius * 2;
-    backCtx.beginPath();
-    backCtx.moveTo(
-      this.keyboardLeft + radius,
-      this.keyboardTop + topFactor * this.keyboardHeight + radius
-    );
-    backCtx.lineTo(
-      this.keyboardLeft + this.keyboardWidth - radius,
-      this.keyboardTop + topFactor * this.keyboardHeight + radius
-    );
-    backCtx.lineTo(
-      this.keyboardLeft + this.keyboardWidth - radius,
-      this.keyboardTop + bottomFactor * this.keyboardHeight - radius
-    );
-    backCtx.lineTo(
-      this.keyboardLeft + radius,
-      this.keyboardTop + bottomFactor * this.keyboardHeight - radius
-    );
-    backCtx.closePath();
-    backCtx.stroke();
-    backCtx.fill();
-  },
-
-  drawArrow: function (l, ahw, ahl) {
-    backCtx.lineWidth = 2;
-    backCtx.beginPath();
-    backCtx.moveTo(-l, 0);
-    backCtx.lineTo(0, 0);
-    backCtx.lineTo(0, -ahw);
-    backCtx.lineTo(ahl, 0);
-    backCtx.lineTo(0, ahw);
-    backCtx.lineTo(0, 0);
-    backCtx.closePath();
-    backCtx.stroke();
-    backCtx.fill();
   },
 
   handleTouches: function () {
@@ -1229,67 +1152,6 @@ var TractUI = {
   },
 };
 
-function makeButton(x, y, width, height, text, switchedOn) {
-  const button = {};
-  button.x = x;
-  button.y = y;
-  button.width = width;
-  button.height = height;
-  button.text = text;
-  button.switchedOn = switchedOn;
-
-  button.draw = function (ctx) {
-    var radius = 10;
-    ctx.strokeStyle = palePink;
-    ctx.fillStyle = palePink;
-    ctx.globalAlpha = 1.0;
-    ctx.lineCap = "round";
-    ctx.lineJoin = "round";
-    ctx.lineWidth = 2 * radius;
-
-    ctx.beginPath();
-    ctx.moveTo(this.x + radius, this.y + radius);
-    ctx.lineTo(this.x + this.width - radius, this.y + radius);
-    ctx.lineTo(this.x + this.width - radius, this.y + this.height - radius);
-    ctx.lineTo(this.x + radius, this.y + this.height - radius);
-    ctx.closePath();
-    ctx.stroke();
-    ctx.fill();
-
-    ctx.font = "16px Arial";
-    ctx.textAlign = "center";
-    if (this.switchedOn) {
-      ctx.fillStyle = "orchid";
-      ctx.globalAlpha = 0.6;
-    } else {
-      ctx.fillStyle = "white";
-      ctx.globalAlpha = 1.0;
-    }
-    this.drawText(ctx);
-  };
-
-  button.drawText = function (ctx) {
-    ctx.fillText(
-      this.text,
-      this.x + this.width / 2,
-      this.y + this.height / 2 + 6
-    );
-  };
-
-  button.handleTouchStart = function (touch) {
-    if (
-      touch.x >= this.x &&
-      touch.x <= this.x + this.width &&
-      touch.y >= this.y &&
-      touch.y <= this.y + this.height
-    ) {
-      this.switchedOn = !this.switchedOn;
-    }
-  };
-
-  return button;
-}
-
 document.body.style.cursor = "pointer";
 
 AudioSystem.init();
@@ -1301,7 +1163,6 @@ TractUI.init();
 requestAnimationFrame(redraw);
 function redraw(highResTimestamp) {
   TractUI.draw();
-  UI.draw();
   requestAnimationFrame(redraw);
   time = Date.now() / 1000;
   UI.updateTouches();

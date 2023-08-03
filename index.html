@@ -1,18 +1,20 @@
 <html>
   <head>
     <title>Pink Trombone</title>
-    <meta name="apple-mobile-web-app-capable" content="yes">
-    <meta name="mobile-web-app-capable" content="yes">
-    </head>
-    
-    <body style="margin: 0; padding: 0; background-color:white">
-    
-    <canvas id="tractCanvas" width="600" height="600" 
-    style = "position: absolute; z-index: 1;  background-color:transparent; margin: 0; padding: 0;">
-    </canvas>
-    <canvas id="backCanvas" width="600" height="600" 
-    style = "position: absolute; z-index: 0; background-color:transparent; margin: 0; padding: 0;">
-    </canvas>
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="mobile-web-app-capable" content="yes" />
+  </head>
+
+  <body>
+    <div>
+      <label><input type="checkbox" name="autoVoice" checked />auto voice</label>
+      <label><input type="checkbox" name="autoWobble" checked />auto wobble</label>
+    </div>
+    <div style="position: relative">
+      <canvas id="backCanvas" width="600" height="600"></canvas>
+      <canvas id="tractCanvas" width="600" height="600"></canvas>
+    </div>
+
     <script type="module" src="/main.js"></script>
   </body>
 </html>
