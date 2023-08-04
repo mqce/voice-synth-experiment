@@ -32,13 +32,6 @@ document.querySelector('[name="autoWobble"]').addEventListener('change', e => {
   autoWobble = e.target.checked;
 });
 
-document.querySelector('[name="loudness"]').addEventListener('change', e => {
-  const t = e.target.value / 100;
-  Glottis.UITenseness = 1 - Math.cos(t * Math.PI * 0.5);
-  Glottis.loudness = Math.pow(Glottis.UITenseness, 0.25);
-});
-
-
 var UI = {
   width: 600,
 
@@ -101,7 +94,7 @@ var UI = {
 
   handleTouches: function (event) {
     TractUI.handleTouches();
-    Glottis.handleTouches();
+    //Glottis.handleTouches();
   },
 
   updateTouches: function () {
@@ -221,63 +214,42 @@ var AudioSystem = {
 
 var Glottis = {
   timeInWaveform: 0,
-  oldFrequency: 140,
-  newFrequency: 140,
-  UIFrequency: 140,
-  smoothFrequency: 140,
+  
+  oldFrequency: 200,
+  newFrequency: 200,
+  UIFrequency: 200,
+  smoothFrequency: 200,
+
   oldTenseness: 0.6,
   newTenseness: 0.6,
   UITenseness: 0.6,
+  
   totalTime: 0,
   vibratoAmount: 0.005,
   vibratoFrequency: 6,
   intensity: 0,
   loudness: 1,
-  isTouched: false,
-  ctx: backCtx,
-  touch: 0,
-  x: 240,
 
-  keyboardTop: 500,
-  keyboardLeft: 0,
-  keyboardWidth: 600,
-  keyboardHeight: 100,
-  semitones: 20,
-  marks: [0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 1, 0, 0, 0, 0],
-  //baseNote: 87.3071, //F
-  baseNote: 130,
-
-  init: function () {
+  init(){
+    this.rangeLoudness = document.querySelector('[name="loudness"]');
+    this.rangeFrequency = document.querySelector('[name="frequency"]');
     this.setupWaveform(0);
-    this.drawKeyboard();
   },
 
-  drawKeyboard: function () {
-    backCtx.beginPath();
-    backCtx.rect(this.keyboardLeft, this.keyboardTop, this.keyboardWidth, this.keyboardHeight);
-    backCtx.stroke();
+  update(){
+    this.updateLoudness();
+    this.updateFrequency();
   },
 
-  handleTouches: function () {
-    if (this.touch != 0 && !this.touch.alive) this.touch = 0;
+  updateLoudness(){
+    const t = this.rangeLoudness.value / 100;
+    Glottis.UITenseness = 1 - Math.cos(t * Math.PI * 0.5);
+    Glottis.loudness = Math.pow(Glottis.UITenseness, 0.25);
+  },
 
-    if (this.touch == 0) {
-      for (var j = 0; j < UI.touchesWithMouse.length; j++) {
-        var touch = UI.touchesWithMouse[j];
-        if (!touch.alive) continue;
-        if (touch.y < this.keyboardTop) continue;
-        this.touch = touch;
-      }
-    }
-
-    if (this.touch != 0) {
-      var local_x = this.touch.x - this.keyboardLeft;
-      var semitone = (this.semitones * local_x) / this.keyboardWidth + 0.5;
-      Glottis.UIFrequency = this.baseNote * Math.pow(2, semitone / 12);
-      if (Glottis.intensity == 0) Glottis.smoothFrequency = Glottis.UIFrequency;
-      this.x = this.touch.x;
-    }
-    Glottis.isTouched = this.touch != 0;
+  updateFrequency(){
+    Glottis.UIFrequency =  this.rangeFrequency.value;
+    if (Glottis.intensity == 0) Glottis.smoothFrequency = Glottis.UIFrequency;
   },
 
   runStep: function (lambda, noiseSource) {
@@ -988,7 +960,8 @@ Tract.init();
 TractUI.init();
 
 requestAnimationFrame(redraw);
-function redraw(highResTimestamp) {
+function redraw() {
+  Glottis.update();
   TractUI.draw();
   requestAnimationFrame(redraw);
   time = Date.now() / 1000;
