@@ -1,7 +1,6 @@
 import "./math.js";
-
+var n = 44;
 export const Tract = {
-  n: 44,
   bladeStart: 10,
   tipStart: 32,
   lipStart: 39,
@@ -25,17 +24,18 @@ export const Tract = {
   velumTarget: 0.01,
 
   init: function () {
-    this.bladeStart = Math.floor((this.bladeStart * this.n) / 44);
-    this.tipStart = Math.floor((this.tipStart * this.n) / 44);
-    this.lipStart = Math.floor((this.lipStart * this.n) / 44);
-    this.diameter = new Float64Array(this.n);
-    this.restDiameter = new Float64Array(this.n);
-    this.targetDiameter = new Float64Array(this.n);
-    this.newDiameter = new Float64Array(this.n);
-    for (var i = 0; i < this.n; i++) {
+    this.n = n;
+    this.bladeStart = Math.floor((this.bladeStart * n) / 44);
+    this.tipStart = Math.floor((this.tipStart * n) / 44);
+    this.lipStart = Math.floor((this.lipStart * n) / 44);
+    this.diameter = new Float64Array(n);
+    this.restDiameter = new Float64Array(n);
+    this.targetDiameter = new Float64Array(n);
+    this.newDiameter = new Float64Array(n);
+    for (var i = 0; i < n; i++) {
       var diameter = 0;
-      if (i < (7 * this.n) / 44 - 0.5) diameter = 0.6;
-      else if (i < (12 * this.n) / 44) diameter = 1.1;
+      if (i < (7 * n) / 44 - 0.5) diameter = 0.6;
+      else if (i < (12 * n) / 44) diameter = 1.1;
       else diameter = 1.5;
       this.diameter[i] =
         this.restDiameter[i] =
@@ -43,17 +43,17 @@ export const Tract = {
         this.newDiameter[i] =
           diameter;
     }
-    this.R = new Float64Array(this.n);
-    this.L = new Float64Array(this.n);
-    this.reflection = new Float64Array(this.n + 1);
-    this.newReflection = new Float64Array(this.n + 1);
-    this.junctionOutputR = new Float64Array(this.n + 1);
-    this.junctionOutputL = new Float64Array(this.n + 1);
-    this.A = new Float64Array(this.n);
-    this.maxAmplitude = new Float64Array(this.n);
+    this.R = new Float64Array(n);
+    this.L = new Float64Array(n);
+    this.reflection = new Float64Array(n + 1);
+    this.newReflection = new Float64Array(n + 1);
+    this.junctionOutputR = new Float64Array(n + 1);
+    this.junctionOutputL = new Float64Array(n + 1);
+    this.A = new Float64Array(n);
+    this.maxAmplitude = new Float64Array(n);
 
-    this.noseLength = Math.floor((28 * this.n) / 44);
-    this.noseStart = this.n - this.noseLength + 1;
+    this.noseLength = Math.floor((28 * n) / 44);
+    this.noseStart = n - this.noseLength + 1;
     this.noseR = new Float64Array(this.noseLength);
     this.noseL = new Float64Array(this.noseLength);
     this.noseJunctionOutputR = new Float64Array(this.noseLength + 1);
@@ -82,7 +82,7 @@ export const Tract = {
   reshapeTract: function (deltaTime) {
     var amount = deltaTime * this.movementSpeed;
     var newLastObstruction = -1;
-    for (var i = 0; i < this.n; i++) {
+    for (var i = 0; i < n; i++) {
       var diameter = this.diameter[i];
       var targetDiameter = this.targetDiameter[i];
       if (diameter <= 0) newLastObstruction = i;
@@ -119,10 +119,10 @@ export const Tract = {
   },
 
   calculateReflections: function () {
-    for (var i = 0; i < this.n; i++) {
+    for (var i = 0; i < n; i++) {
       this.A[i] = this.diameter[i] * this.diameter[i]; //ignoring PI etc.
     }
-    for (var i = 1; i < this.n; i++) {
+    for (var i = 1; i < n; i++) {
       this.reflection[i] = this.newReflection[i];
       if (this.A[i] == 0)
         this.newReflection[i] = 0.999; //to prevent some bad behaviour if 0
@@ -162,9 +162,9 @@ export const Tract = {
 
     this.junctionOutputR[0] =
       this.L[0] * this.glottalReflection + glottalOutput;
-    this.junctionOutputL[this.n] = this.R[this.n - 1] * this.lipReflection;
+    this.junctionOutputL[n] = this.R[n - 1] * this.lipReflection;
 
-    for (var i = 1; i < this.n; i++) {
+    for (var i = 1; i < n; i++) {
       var r =
         this.reflection[i] * (1 - lambda) + this.newReflection[i] * lambda;
       var w = r * (this.R[i - 1] + this.L[i]);
@@ -185,7 +185,7 @@ export const Tract = {
     this.noseJunctionOutputR[0] =
       r * this.noseL[0] + (1 + r) * (this.L[i] + this.R[i - 1]);
 
-    for (var i = 0; i < this.n; i++) {
+    for (var i = 0; i < n; i++) {
       this.R[i] = this.junctionOutputR[i] * 0.999;
       this.L[i] = this.junctionOutputL[i + 1] * 0.999;
 
@@ -199,7 +199,7 @@ export const Tract = {
       }
     }
 
-    const lipOutput = this.R[this.n - 1];
+    const lipOutput = this.R[n - 1];
 
     //nose
     this.noseJunctionOutputL[this.noseLength] =
