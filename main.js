@@ -21,104 +21,43 @@ var sampleRate;
 var time = 0;
 var temp = { a: 0, b: 0 };
 
-
 var alwaysVoice = true;
 var autoWobble = true;
 
 document.querySelector('[name="autoVoice"]').addEventListener('change', e => {
   alwaysVoice = e.target.checked;
 });
+
 document.querySelector('[name="autoWobble"]').addEventListener('change', e => {
   autoWobble = e.target.checked;
 });
 
+document.querySelector('[name="loudness"]').addEventListener('change', e => {
+  const t = e.target.value / 100;
+  Glottis.UITenseness = 1 - Math.cos(t * Math.PI * 0.5);
+  Glottis.loudness = Math.pow(Glottis.UITenseness, 0.25);
+});
+
+
 var UI = {
   width: 600,
-  debugText: "",
 
   init: function () {
     this.touchesWithMouse = [];
     this.mouseTouch = { alive: false, endTime: 0 };
     this.mouseDown = false;
 
-    tractCanvas.addEventListener("touchstart", UI.startTouches);
-    tractCanvas.addEventListener("touchmove", UI.moveTouches);
-    tractCanvas.addEventListener("touchend", UI.endTouches);
-    tractCanvas.addEventListener("touchcancel", UI.endTouches);
-
-    document.addEventListener("touchstart", function (event) {
-      event.preventDefault();
-    });
-
-    document.addEventListener("mousedown", function (event) {
+    const container = document.querySelector('.canvas');
+    container.addEventListener("mousedown", function (event) {
       UI.mouseDown = true;
       event.preventDefault();
       UI.startMouse(event);
     });
-    document.addEventListener("mouseup", function (event) {
+    container.addEventListener("mouseup", function (event) {
       UI.mouseDown = false;
       UI.endMouse(event);
     });
-    document.addEventListener("mousemove", UI.moveMouse);
-  },
-
-  startTouches: function (event) {
-    event.preventDefault();
-    if (!AudioSystem.started) {
-      AudioSystem.started = true;
-      AudioSystem.startSound();
-    }
-
-    var touches = event.changedTouches;
-    for (var j = 0; j < touches.length; j++) {
-      var touch = {};
-      touch.startTime = time;
-      touch.endTime = 0;
-      touch.fricative_intensity = 0;
-      touch.alive = true;
-      touch.id = touches[j].identifier;
-      touch.x = (touches[j].pageX / UI.width) * 600;
-      touch.y = (touches[j].pageY / UI.width) * 600;
-      touch.index = TractUI.getIndex(touch.x, touch.y);
-      touch.diameter = TractUI.getDiameter(touch.x, touch.y);
-      UI.touchesWithMouse.push(touch);
-    }
-
-    UI.handleTouches();
-  },
-
-  getTouchById: function (id) {
-    for (var j = 0; j < UI.touchesWithMouse.length; j++) {
-      if (UI.touchesWithMouse[j].id == id && UI.touchesWithMouse[j].alive)
-        return UI.touchesWithMouse[j];
-    }
-    return 0;
-  },
-
-  moveTouches: function (event) {
-    var touches = event.changedTouches;
-    for (var j = 0; j < touches.length; j++) {
-      var touch = UI.getTouchById(touches[j].identifier);
-      if (touch != 0) {
-        touch.x = (touches[j].pageX / UI.width) * 600;
-        touch.y = (touches[j].pageY / UI.width) * 600;
-        touch.index = TractUI.getIndex(touch.x, touch.y);
-        touch.diameter = TractUI.getDiameter(touch.x, touch.y);
-      }
-    }
-    UI.handleTouches();
-  },
-
-  endTouches: function (event) {
-    var touches = event.changedTouches;
-    for (var j = 0; j < touches.length; j++) {
-      var touch = UI.getTouchById(touches[j].identifier);
-      if (touch != 0) {
-        touch.alive = false;
-        touch.endTime = time;
-      }
-    }
-    UI.handleTouches();
+    container.addEventListener("mousemove", UI.moveMouse);
   },
 
   startMouse: function (event) {
@@ -298,7 +237,6 @@ var Glottis = {
   ctx: backCtx,
   touch: 0,
   x: 240,
-  y: 530,
 
   keyboardTop: 500,
   keyboardLeft: 0,
@@ -306,7 +244,8 @@ var Glottis = {
   keyboardHeight: 100,
   semitones: 20,
   marks: [0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 1, 0, 0, 0, 0],
-  baseNote: 87.3071, //F
+  //baseNote: 87.3071, //F
+  baseNote: 130,
 
   init: function () {
     this.setupWaveform(0);
@@ -314,39 +253,9 @@ var Glottis = {
   },
 
   drawKeyboard: function () {
-    backCtx.strokeStyle = "orchid";
-    backCtx.fillStyle = "orchid";
-    for (var i = 0; i < this.semitones; i++) {
-      var keyWidth = this.keyboardWidth / this.semitones;
-      var x = this.keyboardLeft + (i + 1 / 2) * keyWidth;
-      var y = this.keyboardTop;
-      if (this.marks[(i + 3) % 12] == 1) {
-        backCtx.lineWidth = 4;
-        backCtx.globalAlpha = 0.4;
-      } else {
-        backCtx.lineWidth = 3;
-        backCtx.globalAlpha = 0.2;
-      }
-      backCtx.beginPath();
-      backCtx.moveTo(x, y + 9);
-      backCtx.lineTo(x, y + this.keyboardHeight * 0.4 - 9);
-      backCtx.stroke();
-
-      backCtx.lineWidth = 3;
-      backCtx.globalAlpha = 0.15;
-
-      backCtx.beginPath();
-      backCtx.moveTo(x, y + this.keyboardHeight * 0.52 + 6);
-      backCtx.lineTo(x, y + this.keyboardHeight * 0.72 - 6);
-      backCtx.stroke();
-    }
-
-    backCtx.fillStyle = "orchid";
-    backCtx.font = "17px Arial";
-    backCtx.textAlign = "center";
-    backCtx.globalAlpha = 0.7;
-    backCtx.fillText("voicebox control", 300, 490);
-    backCtx.fillText("pitch", 300, 592);
+    backCtx.beginPath();
+    backCtx.rect(this.keyboardLeft, this.keyboardTop, this.keyboardWidth, this.keyboardHeight);
+    backCtx.stroke();
   },
 
   handleTouches: function () {
@@ -362,18 +271,11 @@ var Glottis = {
     }
 
     if (this.touch != 0) {
-      var local_y = this.touch.y - this.keyboardTop - 10;
       var local_x = this.touch.x - this.keyboardLeft;
-      local_y = Math.clamp(local_y, 0, this.keyboardHeight - 26);
       var semitone = (this.semitones * local_x) / this.keyboardWidth + 0.5;
       Glottis.UIFrequency = this.baseNote * Math.pow(2, semitone / 12);
       if (Glottis.intensity == 0) Glottis.smoothFrequency = Glottis.UIFrequency;
-      //Glottis.UIRd = 3*local_y / (this.keyboardHeight-20);
-      var t = Math.clamp(1 - local_y / (this.keyboardHeight - 28), 0, 1);
-      Glottis.UITenseness = 1 - Math.cos(t * Math.PI * 0.5);
-      Glottis.loudness = Math.pow(Glottis.UITenseness, 0.25);
       this.x = this.touch.x;
-      this.y = local_y + this.keyboardTop + 10;
     }
     Glottis.isTouched = this.touch != 0;
   },
@@ -870,49 +772,6 @@ var TractUI = {
     );
   },
 
-  drawText: function (i, d, text) {
-    var angle =
-      this.angleOffset + (i * this.angleScale * Math.PI) / (Tract.lipStart - 1);
-    var r = this.radius - this.scale * d;
-    this.ctx.save();
-    this.ctx.translate(
-      this.originX - r * Math.cos(angle),
-      this.originY - r * Math.sin(angle) + 2
-    ); //+8);
-    this.ctx.rotate(angle - Math.PI / 2);
-    this.ctx.fillText(text, 0, 0);
-    this.ctx.restore();
-  },
-
-  drawTextStraight: function (i, d, text) {
-    var angle =
-      this.angleOffset + (i * this.angleScale * Math.PI) / (Tract.lipStart - 1);
-    var r = this.radius - this.scale * d;
-    this.ctx.save();
-    this.ctx.translate(
-      this.originX - r * Math.cos(angle),
-      this.originY - r * Math.sin(angle) + 2
-    ); //+8);
-    //this.ctx.rotate(angle-Math.PI/2);
-    this.ctx.fillText(text, 0, 0);
-    this.ctx.restore();
-  },
-
-  drawCircle: function (i, d, radius) {
-    var angle =
-      this.angleOffset + (i * this.angleScale * Math.PI) / (Tract.lipStart - 1);
-    var r = this.radius - this.scale * d;
-    this.ctx.beginPath();
-    this.ctx.arc(
-      this.originX - r * Math.cos(angle),
-      this.originY - r * Math.sin(angle),
-      radius,
-      0,
-      2 * Math.PI
-    );
-    this.ctx.fill();
-  },
-
   getIndex: function (x, y) {
     var xx = x - this.originX;
     var yy = y - this.originY;
@@ -980,20 +839,6 @@ var TractUI = {
     this.lineTo(Tract.noseStart + velumAngle, -this.noseOffset);
     this.ctx.stroke();
 
-    this.ctx.fillStyle = "orchid";
-    this.ctx.font = "20px Arial";
-    this.ctx.textAlign = "center";
-    this.ctx.globalAlpha = 0.7;
-    this.drawText(
-      Tract.n * 0.95,
-      0.8 + 0.8 * Tract.diameter[Tract.n - 1],
-      " lip"
-    );
-
-    this.ctx.globalAlpha = 1.0;
-    this.ctx.fillStyle = "black";
-    this.ctx.textAlign = "left";
-    this.ctx.fillText(UI.debugText, 20, 20);
   },
 
   drawTongueControl: function () {
@@ -1004,36 +849,18 @@ var TractUI = {
     var r = this.radius - this.scale * this.tongueDiameter;
     var x = this.originX - r * Math.cos(angle);
     var y = this.originY - r * Math.sin(angle);
-    this.ctx.lineWidth = 4;
-    this.ctx.strokeStyle = "orchid";
-    this.ctx.globalAlpha = 0.7;
+
+    this.ctx.globalAlpha = 1.0;
     this.ctx.beginPath();
     this.ctx.arc(x, y, 18, 0, 2 * Math.PI);
-    this.ctx.stroke();
-    this.ctx.globalAlpha = 0.15;
     this.ctx.fill();
-    this.ctx.globalAlpha = 1.0;
-
-    this.ctx.fillStyle = "orchid";
   },
 
   drawPitchControl: function () {
-    var w = 9;
-    var h = 15;
     if (Glottis.x) {
-      this.ctx.lineWidth = 4;
-      this.ctx.strokeStyle = "orchid";
-      this.ctx.globalAlpha = 0.7;
       this.ctx.beginPath();
-      this.ctx.moveTo(Glottis.x - w, Glottis.y - h);
-      this.ctx.lineTo(Glottis.x + w, Glottis.y - h);
-      this.ctx.lineTo(Glottis.x + w, Glottis.y + h);
-      this.ctx.lineTo(Glottis.x - w, Glottis.y + h);
-      this.ctx.closePath();
-      this.ctx.stroke();
-      this.ctx.globalAlpha = 0.15;
+      this.ctx.arc(Glottis.x, Glottis.y, 3, 0, 2 * Math.PI);
       this.ctx.fill();
-      this.ctx.globalAlpha = 1.0;
     }
   },
 

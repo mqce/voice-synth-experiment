@@ -6,15 +6,15 @@
   </head>
 
   <body>
-    <div>
-      <label><input type="checkbox" name="autoVoice" checked />auto voice</label>
-      <label><input type="checkbox" name="autoWobble" checked />auto wobble</label>
-    </div>
-    <div style="position: relative">
+    <div class="canvas">
       <canvas id="backCanvas" width="600" height="600"></canvas>
       <canvas id="tractCanvas" width="600" height="600"></canvas>
     </div>
-
+    <div class="input">
+      <label><input type="checkbox" name="autoVoice" checked />auto voice</label>
+      <label><input type="checkbox" name="autoWobble" checked />auto wobble</label>
+      <label><input type="range" name="loudness" min="0" max="100" value="80" />loudness</label>
+    </div>
     <script type="module" src="/main.js"></script>
   </body>
 </html>
