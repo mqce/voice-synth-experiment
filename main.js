@@ -31,8 +31,6 @@ var Tract = {
   fade: 1.0, //0.9999,
   movementSpeed: 15, //cm per second
   transients: [],
-  lipOutput: 0,
-  noseOutput: 0,
   velumTarget: 0.01,
 
   init: function () {
@@ -210,7 +208,7 @@ var Tract = {
       }
     }
 
-    this.lipOutput = this.R[this.n - 1];
+    const lipOutput = this.R[this.n - 1];
 
     //nose
     this.noseJunctionOutputL[this.noseLength] =
@@ -237,7 +235,9 @@ var Tract = {
       }
     }
 
-    this.noseOutput = this.noseR[this.noseLength - 1];
+    const noseOutput = this.noseR[this.noseLength - 1];
+
+    return lipOutput + noseOutput;
   },
 
   finishBlock: function () {

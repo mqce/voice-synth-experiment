@@ -47,7 +47,7 @@ export const Glottis = {
     this.loudness = Math.pow(UITenseness, 0.25);
   },
 
-  runStep(lambda, noiseSource) {
+  runStep(noiseSource, lambda) {
     var timeStep = 1.0 / this.sampleRate;
     timeInWaveform += timeStep;
     this.totalTime += timeStep;

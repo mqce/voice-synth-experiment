@@ -70,14 +70,12 @@ export const AudioSystem = {
     for (var j = 0, N = outArray.length; j < N; j++) {
       var lambda1 = j / N;
       var lambda2 = (j + 0.5) / N;
-      var glottalOutput = glottis.runStep(lambda1, inputArray[j]);
+      var glottalOutput = glottis.runStep(inputArray[j], lambda1);
 
       var vocalOutput = 0;
       //Tract runs at twice the sample rate
-      tract.runStep(glottalOutput, lambda1);
-      vocalOutput += tract.lipOutput + tract.noseOutput;
-      tract.runStep(glottalOutput, lambda2);
-      vocalOutput += tract.lipOutput + tract.noseOutput;
+      vocalOutput += tract.runStep(glottalOutput, lambda1);
+      vocalOutput += tract.runStep(glottalOutput, lambda2);
       outArray[j] = vocalOutput * 0.125;
     }
     glottis.finishBlock();
