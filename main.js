@@ -1,23 +1,11 @@
 import "./style.css";
-
+import "./module/math.js";
 import { UI } from "./module/UI.js";
 import { GlottisUI } from "./module/GlottisUI.js";
 import { Glottis } from "./module/Glottis.js";
 
-Math.clamp = function (number, min, max) {
-  if (number < min) return min;
-  else if (number > max) return max;
-  else return number;
-};
-
-Math.moveTowards = function (current, target, amountUp, amountDown) {
-  if (current < target) return Math.min(current + amountUp, target);
-  else return Math.max(current - amountDown, target);
-};
-
 var sampleRate;
 var time = 0;
-
 
 var AudioSystem = {
   blockLength: 512,
@@ -271,7 +259,6 @@ var Tract = {
 
     //mouth
     this.processTransients();
-    this.addTurbulenceNoise(turbulenceNoise);
 
     this.junctionOutputR[0] =
       this.L[0] * this.glottalReflection + glottalOutput;
@@ -372,35 +359,6 @@ var Tract = {
         this.transients.splice(i, 1);
       }
     }
-  },
-
-  addTurbulenceNoise: function (turbulenceNoise) {
-    for (var j = 0; j < UI.touchesWithMouse.length; j++) {
-      var touch = UI.touchesWithMouse[j];
-      if (touch.index < 2 || touch.index > Tract.n) continue;
-      if (touch.diameter <= 0) continue;
-      var intensity = touch.fricative_intensity;
-      if (intensity == 0) continue;
-      this.addTurbulenceNoiseAtIndex(
-        0.66 * turbulenceNoise * intensity,
-        touch.index,
-        touch.diameter
-      );
-    }
-  },
-
-  addTurbulenceNoiseAtIndex: function (turbulenceNoise, index, diameter) {
-    var i = Math.floor(index);
-    var delta = index - i;
-    turbulenceNoise *= Glottis.getNoiseModulator();
-    var thinness0 = Math.clamp(8 * (0.7 - diameter), 0, 1);
-    var openness = Math.clamp(30 * (diameter - 0.3), 0, 1);
-    var noise0 = turbulenceNoise * (1 - delta) * thinness0 * openness;
-    var noise1 = turbulenceNoise * delta * thinness0 * openness;
-    this.R[i + 1] += noise0 / 2;
-    this.L[i + 1] += noise0 / 2;
-    this.R[i + 2] += noise1 / 2;
-    this.L[i + 2] += noise1 / 2;
   },
 };
 
@@ -576,7 +534,7 @@ var TractUI = {
       for (var j = 0; j < UI.touchesWithMouse.length; j++) {
         var touch = UI.touchesWithMouse[j];
         if (!touch.alive) continue;
-        if (touch.fricative_intensity == 1) continue; //only new touches will pass this
+        //if (touch.fricative_intensity == 1) continue; //only new touches will pass this
         var x = touch.x;
         var y = touch.y;
         var index = TractUI.getIndex(x, y);
@@ -690,5 +648,4 @@ function redraw() {
   TractUI.draw();
   requestAnimationFrame(redraw);
   time = Date.now() / 1000;
-  UI.updateTouches();
 }

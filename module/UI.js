@@ -68,25 +68,4 @@ export const UI = {
     this.tractUI.handleTouches();
   },
 
-  updateTouches: function () {
-    var fricativeAttackTime = 0.1;
-    for (var j = UI.touchesWithMouse.length - 1; j >= 0; j--) {
-      var touch = UI.touchesWithMouse[j];
-      if (!touch.alive && time > touch.endTime + 1) {
-        UI.touchesWithMouse.splice(j, 1);
-      } else if (touch.alive) {
-        touch.fricative_intensity = Math.clamp(
-          (time - touch.startTime) / fricativeAttackTime,
-          0,
-          1
-        );
-      } else {
-        touch.fricative_intensity = Math.clamp(
-          1 - (time - touch.endTime) / fricativeAttackTime,
-          0,
-          1
-        );
-      }
-    }
-  },
 };
