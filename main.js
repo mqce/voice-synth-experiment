@@ -1,4 +1,6 @@
 import "./style.css";
+
+import { GlottisUI } from "./module/GlottisUI.js";
 import { Glottis } from "./module/Glottis.js";
 
 Math.clamp = function (number, min, max) {
@@ -14,7 +16,6 @@ Math.moveTowards = function (current, target, amountUp, amountDown) {
 
 var sampleRate;
 var time = 0;
-var temp = { a: 0, b: 0 };
 
 var UI = {
   width: 600,
@@ -723,8 +724,6 @@ var TractUI = {
       if (index > Tract.noseStart && diameter < -this.noseOffset) {
         Tract.velumTarget = 0.4;
       }
-      temp.a = index;
-      temp.b = diameter;
       if (diameter < -0.85 - this.noseOffset) continue;
       diameter -= 0.3;
       if (diameter < 0) diameter = 0;
@@ -762,7 +761,8 @@ document.body.style.cursor = "pointer";
 
 AudioSystem.init();
 UI.init();
-Glottis.init(sampleRate);
+GlottisUI.init();
+Glottis.init(GlottisUI, sampleRate);
 Tract.init();
 TractUI.init();
 
