@@ -1,12 +1,10 @@
-let time = 0;
 
 export const UI = {
   width: 600,
   tractUI: null,
   onStartMouse: null,
 
-  init: function (t, tractUI, onStartMouse) {
-    time = t;
+  init: function (tractUI, onStartMouse) {
     this.tractUI = tractUI;
     this.onStartMouse = onStartMouse;
     this.touchesWithMouse = [];
@@ -32,7 +30,6 @@ export const UI = {
     this.onStartMouse.call();
 
     var touch = {};
-    touch.startTime = time;
     touch.fricative_intensity = 0;
     touch.endTime = 0;
     touch.alive = true;
@@ -60,7 +57,6 @@ export const UI = {
     var touch = UI.mouseTouch;
     if (!touch.alive) return;
     touch.alive = false;
-    touch.endTime = time;
     UI.handleTouches();
   },
 

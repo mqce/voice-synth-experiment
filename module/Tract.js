@@ -19,7 +19,6 @@ export const Tract = {
   A: [],
 
   lastObstruction: -1,
-  fade: 1.0, //0.9999,
   movementSpeed: 15, //cm per second
   transients: [],
   velumTarget: 0.01,
@@ -192,9 +191,6 @@ export const Tract = {
       this.R[i] = this.junctionOutputR[i] * 0.999;
       this.L[i] = this.junctionOutputL[i + 1] * 0.999;
 
-      //this.R[i] = Math.clamp(this.junctionOutputR[i] * this.fade, -1, 1);
-      //this.L[i] = Math.clamp(this.junctionOutputL[i+1] * this.fade, -1, 1);
-
       if (updateAmplitudes) {
         var amplitude = Math.abs(this.R[i] + this.L[i]);
         if (amplitude > this.maxAmplitude[i]) this.maxAmplitude[i] = amplitude;
@@ -215,11 +211,8 @@ export const Tract = {
     }
 
     for (var i = 0; i < this.noseLength; i++) {
-      this.noseR[i] = this.noseJunctionOutputR[i] * this.fade;
-      this.noseL[i] = this.noseJunctionOutputL[i + 1] * this.fade;
-
-      //this.noseR[i] = Math.clamp(this.noseJunctionOutputR[i] * this.fade, -1, 1);
-      //this.noseL[i] = Math.clamp(this.noseJunctionOutputL[i+1] * this.fade, -1, 1);
+      this.noseR[i] = this.noseJunctionOutputR[i] *0.999;
+      this.noseL[i] = this.noseJunctionOutputL[i + 1] * 0.999;
 
       if (updateAmplitudes) {
         var amplitude = Math.abs(this.noseR[i] + this.noseL[i]);
@@ -230,6 +223,8 @@ export const Tract = {
     }
 
     const noseOutput = this.noseR[this.noseLength - 1];
+
+    //const noseOutput = 0;
 
     return lipOutput + noseOutput;
   },

@@ -1,5 +1,5 @@
 let UI, Glottis,Tract;
-let time=0;
+
 export const TractUI = {
   bladeStart: 10,
   lipStart: 39,
@@ -18,8 +18,7 @@ export const TractUI = {
   gridOffset: 1.7,
   lineColour: "#eee",
 
-  init: function (t, ui, glottis, tract) {
-    time = t;
+  init: function (ui, glottis, tract) {
     UI = ui;
     Glottis = glottis;
     Tract = tract;
@@ -36,6 +35,7 @@ export const TractUI = {
   },
 
   moveTo: function (i, d) {
+    const time = Date.now() / 1000;
     var angle =
       this.angleOffset + (i * this.angleScale * Math.PI) / (this.lipStart - 1);
     var wobble =
@@ -51,6 +51,7 @@ export const TractUI = {
   },
 
   lineTo: function (i, d) {
+    const time = Date.now() / 1000;
     var angle =
       this.angleOffset + (i * this.angleScale * Math.PI) / (this.lipStart - 1);
     var wobble =
