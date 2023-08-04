@@ -1,5 +1,6 @@
 import "./style.css";
 
+import { UI } from "./module/UI.js";
 import { GlottisUI } from "./module/GlottisUI.js";
 import { Glottis } from "./module/Glottis.js";
 
@@ -17,105 +18,16 @@ Math.moveTowards = function (current, target, amountUp, amountDown) {
 var sampleRate;
 var time = 0;
 
-var UI = {
-  width: 600,
-
-  init: function () {
-    this.touchesWithMouse = [];
-    this.mouseTouch = { alive: false, endTime: 0 };
-    this.mouseDown = false;
-
-    const container = document.querySelector('canvas');
-    container.addEventListener("mousedown", function (event) {
-      UI.mouseDown = true;
-      event.preventDefault();
-      UI.startMouse(event);
-    });
-    container.addEventListener("mouseup", function (event) {
-      UI.mouseDown = false;
-      UI.endMouse(event);
-    });
-    container.addEventListener("mousemove", UI.moveMouse);
-  },
-
-  startMouse: function (event) {
-    if (!AudioSystem.started) {
-      AudioSystem.started = true;
-      AudioSystem.startSound();
-    }
-
-    var touch = {};
-    touch.startTime = time;
-    touch.fricative_intensity = 0;
-    touch.endTime = 0;
-    touch.alive = true;
-    touch.id = "mouse" + Math.random();
-    touch.x = ((event.pageX - tractCanvas.offsetLeft) / UI.width) * 600;
-    touch.y = ((event.pageY - tractCanvas.offsetTop) / UI.width) * 600;
-    touch.index = TractUI.getIndex(touch.x, touch.y);
-    touch.diameter = TractUI.getDiameter(touch.x, touch.y);
-    UI.mouseTouch = touch;
-    UI.touchesWithMouse.push(touch);
-    UI.handleTouches();
-  },
-
-  moveMouse: function (event) {
-    var touch = UI.mouseTouch;
-    if (!touch.alive) return;
-    touch.x = ((event.pageX - tractCanvas.offsetLeft) / UI.width) * 600;
-    touch.y = ((event.pageY - tractCanvas.offsetTop) / UI.width) * 600;
-    touch.index = TractUI.getIndex(touch.x, touch.y);
-    touch.diameter = TractUI.getDiameter(touch.x, touch.y);
-    UI.handleTouches();
-  },
-
-  endMouse: function (event) {
-    var touch = UI.mouseTouch;
-    if (!touch.alive) return;
-    touch.alive = false;
-    touch.endTime = time;
-    UI.handleTouches();
-  },
-
-  handleTouches: function (event) {
-    TractUI.handleTouches();
-  },
-
-  updateTouches: function () {
-    var fricativeAttackTime = 0.1;
-    for (var j = UI.touchesWithMouse.length - 1; j >= 0; j--) {
-      var touch = UI.touchesWithMouse[j];
-      if (!touch.alive && time > touch.endTime + 1) {
-        UI.touchesWithMouse.splice(j, 1);
-      } else if (touch.alive) {
-        touch.fricative_intensity = Math.clamp(
-          (time - touch.startTime) / fricativeAttackTime,
-          0,
-          1
-        );
-      } else {
-        touch.fricative_intensity = Math.clamp(
-          1 - (time - touch.endTime) / fricativeAttackTime,
-          0,
-          1
-        );
-      }
-    }
-  },
-};
 
 var AudioSystem = {
   blockLength: 512,
   blockTime: 1,
   started: false,
-  soundOn: false,
 
   init: function () {
     window.AudioContext = window.AudioContext || window.webkitAudioContext;
     this.audioContext = new window.AudioContext();
     sampleRate = this.audioContext.sampleRate;
-    console.log(sampleRate)
-
     this.blockTime = this.blockLength / sampleRate;
   },
 
@@ -760,11 +672,17 @@ var TractUI = {
 document.body.style.cursor = "pointer";
 
 AudioSystem.init();
-UI.init();
+
 GlottisUI.init();
 Glottis.init(GlottisUI, sampleRate);
 Tract.init();
 TractUI.init();
+UI.init(time, TractUI, function(){
+  if (!AudioSystem.started) {
+    AudioSystem.started = true;
+    AudioSystem.startSound();
+  }
+});
 
 requestAnimationFrame(redraw);
 function redraw() {
