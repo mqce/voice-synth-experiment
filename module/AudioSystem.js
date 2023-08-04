@@ -79,7 +79,7 @@ export const AudioSystem = {
       outArray[j] = vocalOutput * 0.125;
     }
     glottis.finishBlock();
-    tract.finishBlock();
+    tract.finishBlock(AudioSystem.blockTime);
   },
 
   mute: function () {
