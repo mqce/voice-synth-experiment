@@ -1,9 +1,11 @@
 import "./math.js";
-var n = 44;
+
+const n = 44;
+let sampleRate = 0;
+
 export const Tract = {
-  bladeStart: 10,
   tipStart: 32,
-  lipStart: 39,
+
   R: [], //component going right
   L: [], //component going left
   reflection: [],
@@ -15,27 +17,24 @@ export const Tract = {
   targetDiameter: [],
   newDiameter: [],
   A: [],
-  glottalReflection: 0.75,
-  lipReflection: -0.85,
+
   lastObstruction: -1,
   fade: 1.0, //0.9999,
   movementSpeed: 15, //cm per second
   transients: [],
   velumTarget: 0.01,
 
-  init: function () {
+  init: function (sampleRate) {
+    this.sampleRate = sampleRate;
     this.n = n;
-    this.bladeStart = Math.floor((this.bladeStart * n) / 44);
-    this.tipStart = Math.floor((this.tipStart * n) / 44);
-    this.lipStart = Math.floor((this.lipStart * n) / 44);
     this.diameter = new Float64Array(n);
     this.restDiameter = new Float64Array(n);
     this.targetDiameter = new Float64Array(n);
     this.newDiameter = new Float64Array(n);
     for (var i = 0; i < n; i++) {
       var diameter = 0;
-      if (i < (7 * n) / 44 - 0.5) diameter = 0.6;
-      else if (i < (12 * n) / 44) diameter = 1.1;
+      if (i < 7) diameter = 0.6;
+      else if (i < 12) diameter = 1.1;
       else diameter = 1.5;
       this.diameter[i] =
         this.restDiameter[i] =
@@ -52,7 +51,7 @@ export const Tract = {
     this.A = new Float64Array(n);
     this.maxAmplitude = new Float64Array(n);
 
-    this.noseLength = Math.floor((28 * n) / 44);
+    this.noseLength = 28;
     this.noseStart = n - this.noseLength + 1;
     this.noseR = new Float64Array(this.noseLength);
     this.noseL = new Float64Array(this.noseLength);
@@ -155,14 +154,18 @@ export const Tract = {
   },
 
   runStep: function (glottalOutput, lambda) {
+    const glottalReflection = 0.75;
+    const lipReflection =  -0.85;
+
+
     var updateAmplitudes = Math.random() < 0.1;
 
     //mouth
     this.processTransients();
 
     this.junctionOutputR[0] =
-      this.L[0] * this.glottalReflection + glottalOutput;
-    this.junctionOutputL[n] = this.R[n - 1] * this.lipReflection;
+      this.L[0] * glottalReflection + glottalOutput;
+    this.junctionOutputL[n] = this.R[n - 1] * lipReflection;
 
     for (var i = 1; i < n; i++) {
       var r =
@@ -203,7 +206,7 @@ export const Tract = {
 
     //nose
     this.noseJunctionOutputL[this.noseLength] =
-      this.noseR[this.noseLength - 1] * this.lipReflection;
+      this.noseR[this.noseLength - 1] * lipReflection;
 
     for (var i = 1; i < this.noseLength; i++) {
       var w = this.noseReflection[i] * (this.noseR[i - 1] + this.noseL[i]);
@@ -253,7 +256,7 @@ export const Tract = {
         trans.strength * Math.pow(2, -trans.exponent * trans.timeAlive);
       this.R[trans.position] += amplitude / 2;
       this.L[trans.position] += amplitude / 2;
-      trans.timeAlive += 1.0 / (sampleRate * 2);
+      trans.timeAlive += 1.0 / (this.sampleRate * 2);
     }
     for (var i = this.transients.length - 1; i >= 0; i--) {
       var trans = this.transients[i];
