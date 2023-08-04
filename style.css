@@ -5,13 +5,8 @@ body {
   display: flex;
 }
 
-.canvas {
-  width: 600px;
-  position: relative;
-}
-
 canvas {
-  position: absolute;
+  width: 600px;
   background-color: transparent;
   margin: 0;
   padding: 0;

@@ -1,5 +1,5 @@
 import "./style.css";
-import noise from "./module/simplex.js";
+import { Glottis } from "./module/Glottis.js";
 
 Math.clamp = function (number, min, max) {
   if (number < min) return min;
@@ -12,25 +12,9 @@ Math.moveTowards = function (current, target, amountUp, amountDown) {
   else return Math.max(current - amountDown, target);
 };
 
-var backCanvas = document.getElementById("backCanvas");
-var backCtx = backCanvas.getContext("2d");
-var tractCanvas = document.getElementById("tractCanvas");
-var tractCtx = tractCanvas.getContext("2d");
-
 var sampleRate;
 var time = 0;
 var temp = { a: 0, b: 0 };
-
-var alwaysVoice = true;
-var autoWobble = true;
-
-document.querySelector('[name="autoVoice"]').addEventListener('change', e => {
-  alwaysVoice = e.target.checked;
-});
-
-document.querySelector('[name="autoWobble"]').addEventListener('change', e => {
-  autoWobble = e.target.checked;
-});
 
 var UI = {
   width: 600,
@@ -40,7 +24,7 @@ var UI = {
     this.mouseTouch = { alive: false, endTime: 0 };
     this.mouseDown = false;
 
-    const container = document.querySelector('.canvas');
+    const container = document.querySelector('canvas');
     container.addEventListener("mousedown", function (event) {
       UI.mouseDown = true;
       event.preventDefault();
@@ -94,7 +78,6 @@ var UI = {
 
   handleTouches: function (event) {
     TractUI.handleTouches();
-    //Glottis.handleTouches();
   },
 
   updateTouches: function () {
@@ -130,6 +113,7 @@ var AudioSystem = {
     window.AudioContext = window.AudioContext || window.webkitAudioContext;
     this.audioContext = new window.AudioContext();
     sampleRate = this.audioContext.sampleRate;
+    console.log(sampleRate)
 
     this.blockTime = this.blockLength / sampleRate;
   },
@@ -212,183 +196,6 @@ var AudioSystem = {
   },
 };
 
-var Glottis = {
-  timeInWaveform: 0,
-  
-  oldFrequency: 200,
-  newFrequency: 200,
-  UIFrequency: 200,
-  smoothFrequency: 200,
-
-  oldTenseness: 0.6,
-  newTenseness: 0.6,
-  UITenseness: 0.6,
-  
-  totalTime: 0,
-  vibratoAmount: 0.005,
-  vibratoFrequency: 6,
-  intensity: 0,
-  loudness: 1,
-
-  init(){
-    this.rangeLoudness = document.querySelector('[name="loudness"]');
-    this.rangeFrequency = document.querySelector('[name="frequency"]');
-    this.setupWaveform(0);
-  },
-
-  update(){
-    this.updateLoudness();
-    this.updateFrequency();
-  },
-
-  updateLoudness(){
-    const t = this.rangeLoudness.value / 100;
-    Glottis.UITenseness = 1 - Math.cos(t * Math.PI * 0.5);
-    Glottis.loudness = Math.pow(Glottis.UITenseness, 0.25);
-  },
-
-  updateFrequency(){
-    Glottis.UIFrequency =  this.rangeFrequency.value;
-    if (Glottis.intensity == 0) Glottis.smoothFrequency = Glottis.UIFrequency;
-  },
-
-  runStep: function (lambda, noiseSource) {
-    var timeStep = 1.0 / sampleRate;
-    this.timeInWaveform += timeStep;
-    this.totalTime += timeStep;
-    if (this.timeInWaveform > this.waveformLength) {
-      this.timeInWaveform -= this.waveformLength;
-      this.setupWaveform(lambda);
-    }
-    var out = this.normalizedLFWaveform(
-      this.timeInWaveform / this.waveformLength
-    );
-    var aspiration =
-      this.intensity *
-      (1 - Math.sqrt(this.UITenseness)) *
-      this.getNoiseModulator() *
-      noiseSource;
-    aspiration *= 0.2 + 0.02 * noise.simplex1(this.totalTime * 1.99);
-    out += aspiration;
-    return out;
-  },
-
-  getNoiseModulator: function () {
-    var voiced =
-      0.1 +
-      0.2 *
-        Math.max(
-          0,
-          Math.sin((Math.PI * 2 * this.timeInWaveform) / this.waveformLength)
-        );
-    //return 0.3;
-    return (
-      this.UITenseness * this.intensity * voiced +
-      (1 - this.UITenseness * this.intensity) * 0.3
-    );
-  },
-
-  finishBlock: function () {
-    var vibrato = 0;
-    vibrato +=
-      this.vibratoAmount *
-      Math.sin(2 * Math.PI * this.totalTime * this.vibratoFrequency);
-    vibrato += 0.02 * noise.simplex1(this.totalTime * 4.07);
-    vibrato += 0.04 * noise.simplex1(this.totalTime * 2.15);
-    if (autoWobble) {
-      vibrato += 0.2 * noise.simplex1(this.totalTime * 0.98);
-      vibrato += 0.4 * noise.simplex1(this.totalTime * 0.5);
-    }
-    if (this.UIFrequency > this.smoothFrequency)
-      this.smoothFrequency = Math.min(
-        this.smoothFrequency * 1.1,
-        this.UIFrequency
-      );
-    if (this.UIFrequency < this.smoothFrequency)
-      this.smoothFrequency = Math.max(
-        this.smoothFrequency / 1.1,
-        this.UIFrequency
-      );
-    this.oldFrequency = this.newFrequency;
-    this.newFrequency = this.smoothFrequency * (1 + vibrato);
-    this.oldTenseness = this.newTenseness;
-    this.newTenseness =
-      this.UITenseness +
-      0.1 * noise.simplex1(this.totalTime * 0.46) +
-      0.05 * noise.simplex1(this.totalTime * 0.36);
-    if (!this.isTouched && alwaysVoice)
-      this.newTenseness += (3 - this.UITenseness) * (1 - this.intensity);
-
-    if (this.isTouched || alwaysVoice) this.intensity += 0.13;
-    else this.intensity -= 0.05;
-    this.intensity = Math.clamp(this.intensity, 0, 1);
-  },
-
-  setupWaveform: function (lambda) {
-    this.frequency =
-      this.oldFrequency * (1 - lambda) + this.newFrequency * lambda;
-    var tenseness =
-      this.oldTenseness * (1 - lambda) + this.newTenseness * lambda;
-    this.Rd = 3 * (1 - tenseness);
-    this.waveformLength = 1.0 / this.frequency;
-
-    var Rd = this.Rd;
-    if (Rd < 0.5) Rd = 0.5;
-    if (Rd > 2.7) Rd = 2.7;
-    var output;
-    // normalized to time = 1, Ee = 1
-    var Ra = -0.01 + 0.048 * Rd;
-    var Rk = 0.224 + 0.118 * Rd;
-    var Rg =
-      ((Rk / 4) * (0.5 + 1.2 * Rk)) / (0.11 * Rd - Ra * (0.5 + 1.2 * Rk));
-
-    var Ta = Ra;
-    var Tp = 1 / (2 * Rg);
-    var Te = Tp + Tp * Rk; //
-
-    var epsilon = 1 / Ta;
-    var shift = Math.exp(-epsilon * (1 - Te));
-    var Delta = 1 - shift; //divide by this to scale RHS
-
-    var RHSIntegral = (1 / epsilon) * (shift - 1) + (1 - Te) * shift;
-    RHSIntegral = RHSIntegral / Delta;
-
-    var totalLowerIntegral = -(Te - Tp) / 2 + RHSIntegral;
-    var totalUpperIntegral = -totalLowerIntegral;
-
-    var omega = Math.PI / Tp;
-    var s = Math.sin(omega * Te);
-    // need E0*e^(alpha*Te)*s = -1 (to meet the return at -1)
-    // and E0*e^(alpha*Tp/2) * Tp*2/pi = totalUpperIntegral
-    //             (our approximation of the integral up to Tp)
-    // writing x for e^alpha,
-    // have E0*x^Te*s = -1 and E0 * x^(Tp/2) * Tp*2/pi = totalUpperIntegral
-    // dividing the second by the first,
-    // letting y = x^(Tp/2 - Te),
-    // y * Tp*2 / (pi*s) = -totalUpperIntegral;
-    var y = (-Math.PI * s * totalUpperIntegral) / (Tp * 2);
-    var z = Math.log(y);
-    var alpha = z / (Tp / 2 - Te);
-    var E0 = -1 / (s * Math.exp(alpha * Te));
-    this.alpha = alpha;
-    this.E0 = E0;
-    this.epsilon = epsilon;
-    this.shift = shift;
-    this.Delta = Delta;
-    this.Te = Te;
-    this.omega = omega;
-  },
-
-  normalizedLFWaveform: function (t) {
-    let output;
-    if (t > this.Te)
-      output =
-        (-Math.exp(-this.epsilon * (t - this.Te)) + this.shift) / this.Delta;
-    else output = this.E0 * Math.exp(this.alpha * t) * Math.sin(this.omega * t);
-
-    return output * this.intensity * this.loudness;
-  },
-};
 
 var Tract = {
   n: 44,
@@ -553,7 +360,6 @@ var Tract = {
     this.processTransients();
     this.addTurbulenceNoise(turbulenceNoise);
 
-    //this.glottalReflection = -0.8 + 1.6 * Glottis.newTenseness;
     this.junctionOutputR[0] =
       this.L[0] * this.glottalReflection + glottalOutput;
     this.junctionOutputL[this.n] = this.R[this.n - 1] * this.lipReflection;
@@ -703,7 +509,8 @@ var TractUI = {
   lineColour: "#C070C6",
 
   init: function () {
-    this.ctx = tractCtx;
+    const canvas = document.getElementById("tractCanvas");
+    this.ctx = canvas.getContext("2d");
     this.setRestDiameter();
     for (var i = 0; i < Tract.n; i++) {
       Tract.diameter[i] = Tract.targetDiameter[i] = Tract.restDiameter[i];
@@ -955,7 +762,7 @@ document.body.style.cursor = "pointer";
 
 AudioSystem.init();
 UI.init();
-Glottis.init();
+Glottis.init(sampleRate);
 Tract.init();
 TractUI.init();
 
