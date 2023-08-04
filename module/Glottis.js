@@ -1,5 +1,6 @@
 
 import noise from "./simplex.js";
+import { Waveform } from "./Waveform.js";
 
 /**
  * Glottis = 声門
@@ -19,8 +20,7 @@ export const Glottis = {
   UITenseness: 0.6,
   
   totalTime: 0,
-  vibratoAmount: 0.005,
-  vibratoFrequency: 6,
+
   intensity: 0,
   loudness: 1,
 
@@ -37,7 +37,7 @@ export const Glottis = {
     });
     this.rangeLoudness = document.querySelector('[name="loudness"]');
     this.rangeFrequency = document.querySelector('[name="frequency"]');
-    this.setupWaveform(0);
+    this.waveformLength = Waveform.setup(this.oldFrequency, this.newFrequency, this.oldTenseness, this.newTenseness, 0);
   },
 
   update(){
@@ -62,11 +62,11 @@ export const Glottis = {
     this.totalTime += timeStep;
     if (timeInWaveform > this.waveformLength) {
       timeInWaveform -= this.waveformLength;
-      this.setupWaveform(lambda);
+      this.waveformLength = Waveform.setup(this.oldFrequency, this.newFrequency, this.oldTenseness, this.newTenseness, lambda);
     }
-    var out = this.normalizedLFWaveform(
+    var out = Waveform.output(
       timeInWaveform / this.waveformLength
-    );
+    ) * this.intensity * this.loudness;;
     var aspiration =
       this.intensity *
       (1 - Math.sqrt(this.UITenseness)) *
@@ -93,10 +93,8 @@ export const Glottis = {
   },
 
   finishBlock: function () {
-    var vibrato = 0;
-    vibrato +=
-      this.vibratoAmount *
-      Math.sin(2 * Math.PI * this.totalTime * this.vibratoFrequency);
+    const vibratoFrequency = 6;
+    let vibrato = 0.005 * Math.sin(2 * Math.PI * this.totalTime * vibratoFrequency);
     vibrato += 0.02 * noise.simplex1(this.totalTime * 4.07);
     vibrato += 0.04 * noise.simplex1(this.totalTime * 2.15);
     if (this.autoWobble) {
@@ -128,68 +126,4 @@ export const Glottis = {
     this.intensity = Math.clamp(this.intensity, 0, 1);
   },
 
-  setupWaveform: function (lambda) {
-    this.frequency =
-      this.oldFrequency * (1 - lambda) + this.newFrequency * lambda;
-    var tenseness =
-      this.oldTenseness * (1 - lambda) + this.newTenseness * lambda;
-    this.Rd = 3 * (1 - tenseness);
-    this.waveformLength = 1.0 / this.frequency;
-
-    var Rd = this.Rd;
-    if (Rd < 0.5) Rd = 0.5;
-    if (Rd > 2.7) Rd = 2.7;
-    
-    // normalized to time = 1, Ee = 1
-    var Ra = -0.01 + 0.048 * Rd;
-    var Rk = 0.224 + 0.118 * Rd;
-    var Rg =
-      ((Rk / 4) * (0.5 + 1.2 * Rk)) / (0.11 * Rd - Ra * (0.5 + 1.2 * Rk));
-
-    var Ta = Ra;
-    var Tp = 1 / (2 * Rg);
-    var Te = Tp + Tp * Rk; //
-
-    var epsilon = 1 / Ta;
-    var shift = Math.exp(-epsilon * (1 - Te));
-    var Delta = 1 - shift; //divide by this to scale RHS
-
-    var RHSIntegral = (1 / epsilon) * (shift - 1) + (1 - Te) * shift;
-    RHSIntegral = RHSIntegral / Delta;
-
-    var totalLowerIntegral = -(Te - Tp) / 2 + RHSIntegral;
-    var totalUpperIntegral = -totalLowerIntegral;
-
-    var omega = Math.PI / Tp;
-    var s = Math.sin(omega * Te);
-    // need E0*e^(alpha*Te)*s = -1 (to meet the return at -1)
-    // and E0*e^(alpha*Tp/2) * Tp*2/pi = totalUpperIntegral
-    //             (our approximation of the integral up to Tp)
-    // writing x for e^alpha,
-    // have E0*x^Te*s = -1 and E0 * x^(Tp/2) * Tp*2/pi = totalUpperIntegral
-    // dividing the second by the first,
-    // letting y = x^(Tp/2 - Te),
-    // y * Tp*2 / (pi*s) = -totalUpperIntegral;
-    var y = (-Math.PI * s * totalUpperIntegral) / (Tp * 2);
-    var z = Math.log(y);
-    var alpha = z / (Tp / 2 - Te);
-    var E0 = -1 / (s * Math.exp(alpha * Te));
-    this.alpha = alpha;
-    this.E0 = E0;
-    this.epsilon = epsilon;
-    this.shift = shift;
-    this.Delta = Delta;
-    this.Te = Te;
-    this.omega = omega;
-  },
-
-  normalizedLFWaveform: function (t) {
-    let output;
-    if (t > this.Te)
-      output =
-        (-Math.exp(-this.epsilon * (t - this.Te)) + this.shift) / this.Delta;
-    else output = this.E0 * Math.exp(this.alpha * t) * Math.sin(this.omega * t);
-
-    return output * this.intensity * this.loudness;
-  },
 };
