@@ -1,10 +1,13 @@
-let UI, Glottis,Tract;
+let UI, Tract;
+
+
+const originX = 340;
+const originY = 449;
 
 export const TractUI = {
   bladeStart: 10,
   lipStart: 39,
-  originX: 340,
-  originY: 449,
+
   radius: 298,
   scale: 60,
   tongueIndex: 12.9,
@@ -18,9 +21,8 @@ export const TractUI = {
   gridOffset: 1.7,
   lineColour: "#eee",
 
-  init: function (ui, glottis, tract) {
+  init: function (ui, tract) {
     UI = ui;
-    Glottis = glottis;
     Tract = tract;
     const canvas = document.getElementById("tractCanvas");
     this.ctx = canvas.getContext("2d");
@@ -45,8 +47,8 @@ export const TractUI = {
     angle += wobble;
     var r = this.radius - this.scale * d + 100 * wobble;
     this.ctx.moveTo(
-      this.originX - r * Math.cos(angle),
-      this.originY - r * Math.sin(angle)
+      originX - r * Math.cos(angle),
+      originY - r * Math.sin(angle)
     );
   },
 
@@ -61,14 +63,14 @@ export const TractUI = {
     angle += wobble;
     var r = this.radius - this.scale * d + 100 * wobble;
     this.ctx.lineTo(
-      this.originX - r * Math.cos(angle),
-      this.originY - r * Math.sin(angle)
+      originX - r * Math.cos(angle),
+      originY - r * Math.sin(angle)
     );
   },
 
   getIndex: function (x, y) {
-    var xx = x - this.originX;
-    var yy = y - this.originY;
+    var xx = x - originX;
+    var yy = y - originY;
     var angle = Math.atan2(yy, xx);
     while (angle > 0) angle -= 2 * Math.PI;
     return (
@@ -77,8 +79,8 @@ export const TractUI = {
     );
   },
   getDiameter: function (x, y) {
-    var xx = x - this.originX;
-    var yy = y - this.originY;
+    var xx = x - originX;
+    var yy = y - originY;
     return (this.radius - Math.sqrt(xx * xx + yy * yy)) / this.scale;
   },
 
@@ -88,7 +90,6 @@ export const TractUI = {
     this.ctx.lineJoin = "round";
 
     this.drawTongueControl();
-    this.drawPitchControl();
 
     var velum = Tract.noseDiameter[0];
     var velumAngle = velum * 4;
@@ -141,21 +142,13 @@ export const TractUI = {
       this.angleOffset +
       (this.tongueIndex * this.angleScale * Math.PI) / (this.lipStart - 1);
     var r = this.radius - this.scale * this.tongueDiameter;
-    var x = this.originX - r * Math.cos(angle);
-    var y = this.originY - r * Math.sin(angle);
+    var x = originX - r * Math.cos(angle);
+    var y = originY - r * Math.sin(angle);
 
     this.ctx.globalAlpha = 1.0;
     this.ctx.beginPath();
     this.ctx.arc(x, y, 18, 0, 2 * Math.PI);
     this.ctx.fill();
-  },
-
-  drawPitchControl: function () {
-    if (Glottis.x) {
-      this.ctx.beginPath();
-      this.ctx.arc(Glottis.x, Glottis.y, 3, 0, 2 * Math.PI);
-      this.ctx.fill();
-    }
   },
 
   setRestDiameter: function () {
@@ -171,14 +164,11 @@ export const TractUI = {
     }
   },
 
-  handleTouches: function () {
+  handleTouches: function (touch) {
     if (this.tongueTouch != 0 && !this.tongueTouch.alive) this.tongueTouch = 0;
 
     if (this.tongueTouch == 0) {
-      for (var j = 0; j < UI.touchesWithMouse.length; j++) {
-        var touch = UI.touchesWithMouse[j];
-        if (!touch.alive) continue;
-        //if (touch.fricative_intensity == 1) continue; //only new touches will pass this
+      if (touch.alive) {
         var x = touch.x;
         var y = touch.y;
         var index = TractUI.getIndex(x, y);
@@ -228,9 +218,8 @@ export const TractUI = {
 
     //other constrictions and nose
     Tract.velumTarget = 0.01;
-    for (var j = 0; j < UI.touchesWithMouse.length; j++) {
-      var touch = UI.touchesWithMouse[j];
-      if (!touch.alive) continue;
+
+    if (touch.alive) {
       var x = touch.x;
       var y = touch.y;
       var index = TractUI.getIndex(x, y);
@@ -238,35 +227,37 @@ export const TractUI = {
       if (index > Tract.noseStart && diameter < -this.noseOffset) {
         Tract.velumTarget = 0.4;
       }
-      if (diameter < -0.85 - this.noseOffset) continue;
-      diameter -= 0.3;
-      if (diameter < 0) diameter = 0;
-      var width = 2;
-      if (index < 25) width = 10;
-      else if (index >= Tract.tipStart) width = 5;
-      else width = 10 - (5 * (index - 25)) / (Tract.tipStart - 25);
-      if (
-        index >= 2 &&
-        index < Tract.n &&
-        y < tractCanvas.height &&
-        diameter < 3
-      ) {
-        var intIndex = Math.round(index);
-        for (var i = -Math.ceil(width) - 1; i < width + 1; i++) {
-          if (intIndex + i < 0 || intIndex + i >= Tract.n) continue;
-          var relpos = intIndex + i - index;
-          relpos = Math.abs(relpos) - 0.5;
-          var shrink;
-          if (relpos <= 0) shrink = 0;
-          else if (relpos > width) shrink = 1;
-          else shrink = 0.5 * (1 - Math.cos((Math.PI * relpos) / width));
-          if (diameter < Tract.targetDiameter[intIndex + i]) {
-            Tract.targetDiameter[intIndex + i] =
-              diameter +
-              (Tract.targetDiameter[intIndex + i] - diameter) * shrink;
+      if (diameter >= -0.85 - this.noseOffset) {
+        diameter -= 0.3;
+        if (diameter < 0) diameter = 0;
+        var width = 2;
+        if (index < 25) width = 10;
+        else if (index >= Tract.tipStart) width = 5;
+        else width = 10 - (5 * (index - 25)) / (Tract.tipStart - 25);
+        if (
+          index >= 2 &&
+          index < Tract.n &&
+          y < tractCanvas.height &&
+          diameter < 3
+        ) {
+          var intIndex = Math.round(index);
+          for (var i = -Math.ceil(width) - 1; i < width + 1; i++) {
+            if (intIndex + i < 0 || intIndex + i >= Tract.n) continue;
+            var relpos = intIndex + i - index;
+            relpos = Math.abs(relpos) - 0.5;
+            var shrink;
+            if (relpos <= 0) shrink = 0;
+            else if (relpos > width) shrink = 1;
+            else shrink = 0.5 * (1 - Math.cos((Math.PI * relpos) / width));
+            if (diameter < Tract.targetDiameter[intIndex + i]) {
+              Tract.targetDiameter[intIndex + i] =
+                diameter +
+                (Tract.targetDiameter[intIndex + i] - diameter) * shrink;
+            }
           }
         }
       }
+      
     }
   },
 };

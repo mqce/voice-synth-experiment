@@ -1,7 +1,6 @@
 import "./math.js";
 
 const n = 44;
-let sampleRate = 0;
 
 export const Tract = {
   tipStart: 32,

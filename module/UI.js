@@ -1,67 +1,48 @@
+let touch = {
+  alive: false,
+};
+let TractUI;
 
 export const UI = {
-  width: 600,
   tractUI: null,
   onStartMouse: null,
 
-  init: function (tractUI, onStartMouse) {
-    this.tractUI = tractUI;
+  init(tractUI, onStartMouse) {
+    TractUI = tractUI;
     this.onStartMouse = onStartMouse;
-    this.touchesWithMouse = [];
-    this.mouseTouch = { alive: false, endTime: 0 };
-    this.mouseDown = false;
 
     const container = document.querySelector('canvas');
-    container.addEventListener("mousedown", function (event) {
-      UI.mouseDown = true;
-      event.preventDefault();
-      UI.startMouse(event);
+    container.addEventListener("mousedown", e => {
+      e.preventDefault();
+      UI.startMouse(e);
     });
-    container.addEventListener("mouseup", function (event) {
-      UI.mouseDown = false;
-      UI.endMouse(event);
-    });
-    container.addEventListener("mousemove", (e)=>{
+    container.addEventListener("mousemove", e=> {
       UI.moveMouse(e);
     });
+    container.addEventListener("mouseup", e=> {
+      UI.endMouse();
+    });
   },
 
-  startMouse: function (event) {
+  startMouse(event) {
     this.onStartMouse.call();
-
-    var touch = {};
-    touch.fricative_intensity = 0;
-    touch.endTime = 0;
     touch.alive = true;
-    touch.id = "mouse" + Math.random();
-    touch.x = ((event.pageX - tractCanvas.offsetLeft) / UI.width) * 600;
-    touch.y = ((event.pageY - tractCanvas.offsetTop) / UI.width) * 600;
-    touch.index = this.tractUI.getIndex(touch.x, touch.y);
-    touch.diameter = this.tractUI.getDiameter(touch.x, touch.y);
-    UI.mouseTouch = touch;
-    UI.touchesWithMouse.push(touch);
-    UI.handleTouches();
+    touch.x = event.clientX;
+    touch.y = event.clientY;
+    TractUI.handleTouches(touch);
   },
 
-  moveMouse: function (event) {
-    var touch = UI.mouseTouch;
+  moveMouse(event) {
     if (!touch.alive) return;
-    touch.x = ((event.pageX - tractCanvas.offsetLeft) / UI.width) * 600;
-    touch.y = ((event.pageY - tractCanvas.offsetTop) / UI.width) * 600;
-    touch.index = this.tractUI.getIndex(touch.x, touch.y);
-    touch.diameter = this.tractUI.getDiameter(touch.x, touch.y);
-    UI.handleTouches();
+    touch.x = event.clientX;
+    touch.y = event.clientY;
+    TractUI.handleTouches(touch);
   },
 
-  endMouse: function (event) {
-    var touch = UI.mouseTouch;
+  endMouse() {
     if (!touch.alive) return;
     touch.alive = false;
-    UI.handleTouches();
-  },
-
-  handleTouches: function (event) {
-    this.tractUI.handleTouches();
+    TractUI.handleTouches(touch);
   },
 
 };

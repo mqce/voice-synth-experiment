@@ -12,7 +12,7 @@ const sampleRate = AudioSystem.init(Glottis, Tract);
 GlottisUI.init();
 Glottis.init(GlottisUI, sampleRate);
 Tract.init(sampleRate);
-TractUI.init(UI, Glottis, Tract);
+TractUI.init(UI, Tract);
 UI.init(TractUI, ()=>{
   if (!AudioSystem.started) {
     AudioSystem.started = true;
