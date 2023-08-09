@@ -1,8 +1,49 @@
-let UI, Tract;
-
+let Tract;
 
 const originX = 340;
 const originY = 449;
+
+let touch = {
+  alive: false,
+};
+
+const UI = {
+  init(canvas, onStartMouse) {
+    this.onStartMouse = onStartMouse;
+    canvas.addEventListener("mousedown", e => {
+      e.preventDefault();
+      this.startMouse(e);
+    });
+    canvas.addEventListener("mousemove", e=> {
+      this.moveMouse(e);
+    });
+    canvas.addEventListener("mouseup", e=> {
+      this.endMouse();
+    });
+  },
+
+  startMouse(event) {
+    this.onStartMouse.call();
+    touch.alive = true;
+    touch.x = event.clientX;
+    touch.y = event.clientY;
+    TractUI.handleTouches(touch);
+  },
+
+  moveMouse(event) {
+    if (!touch.alive) return;
+    touch.x = event.clientX;
+    touch.y = event.clientY;
+    TractUI.handleTouches(touch);
+  },
+
+  endMouse() {
+    if (!touch.alive) return;
+    touch.alive = false;
+    TractUI.handleTouches(touch);
+  },
+
+};
 
 export const TractUI = {
   bladeStart: 10,
@@ -21,11 +62,11 @@ export const TractUI = {
   gridOffset: 1.7,
   lineColour: "#eee",
 
-  init: function (ui, tract) {
-    UI = ui;
+  init(tract, onStartMouse) {
     Tract = tract;
     const canvas = document.getElementById("tractCanvas");
     this.ctx = canvas.getContext("2d");
+    UI.init(canvas, onStartMouse);
     this.setRestDiameter();
     for (var i = 0; i < Tract.n; i++) {
       Tract.diameter[i] = Tract.targetDiameter[i] = Tract.restDiameter[i];

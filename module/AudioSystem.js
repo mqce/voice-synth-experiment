@@ -16,6 +16,13 @@ export const AudioSystem = {
     return sampleRate;
   },
 
+  start(){
+    if (!this.started) {
+      this.started = true;
+      this.startSound();
+    }
+  },
+
   startSound: function () {
     //scriptProcessor may need a dummy input channel on iOS
     this.scriptProcessor = this.audioContext.createScriptProcessor(
