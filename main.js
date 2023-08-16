@@ -8,16 +8,18 @@ import { Tract } from "./module/Tract.js";
 import { TractUI } from "./module/TractUI.js";
 
 const sampleRate = AudioSystem.init(Glottis, Tract);
-GlottisUI.init();
-Glottis.init(GlottisUI, sampleRate);
-Tract.init(sampleRate);
-TractUI.init(Tract, () => {
+window.addEventListener("mousedown", e => {
   AudioSystem.start();
 });
 
-function redraw() {
+GlottisUI.init();
+Glottis.init(GlottisUI, sampleRate);
+Tract.init(sampleRate);
+TractUI.init(Tract);
+
+function update() {
   Glottis.update();
-  TractUI.draw();
-  requestAnimationFrame(redraw);
+  TractUI.update();
+  requestAnimationFrame(update);
 }
-requestAnimationFrame(redraw);
+update();

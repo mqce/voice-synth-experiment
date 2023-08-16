@@ -8,8 +8,7 @@ let touch = {
 };
 
 const UI = {
-  init(canvas, onStartMouse) {
-    this.onStartMouse = onStartMouse;
+  init(canvas) {
     canvas.addEventListener("mousedown", e => {
       e.preventDefault();
       this.startMouse(e);
@@ -23,7 +22,6 @@ const UI = {
   },
 
   startMouse(event) {
-    this.onStartMouse.call();
     touch.alive = true;
     touch.x = event.clientX;
     touch.y = event.clientY;
@@ -62,11 +60,11 @@ export const TractUI = {
   gridOffset: 1.7,
   lineColour: "#eee",
 
-  init(tract, onStartMouse) {
+  init(tract) {
     Tract = tract;
     const canvas = document.getElementById("tractCanvas");
     this.ctx = canvas.getContext("2d");
-    UI.init(canvas, onStartMouse);
+    UI.init(canvas);
     this.setRestDiameter();
     for (var i = 0; i < Tract.n; i++) {
       Tract.diameter[i] = Tract.targetDiameter[i] = Tract.restDiameter[i];
@@ -125,7 +123,7 @@ export const TractUI = {
     return (this.radius - Math.sqrt(xx * xx + yy * yy)) / this.scale;
   },
 
-  draw: function () {
+  update: function () {
     this.ctx.clearRect(0, 0, tractCanvas.width, tractCanvas.height);
     this.ctx.lineCap = "round";
     this.ctx.lineJoin = "round";
