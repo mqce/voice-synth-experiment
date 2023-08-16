@@ -7,6 +7,7 @@ import { Waveform } from "./Waveform.js";
  * 入力はloudnessとfrequencyのみ
  */
 let timeInWaveform = 0;
+let totalTime = 0;
 
 let UI;
 let input = {};
@@ -22,7 +23,6 @@ let UITenseness = 0.6;
 export const Glottis = {
 
   sampleRate : 0,
-  totalTime: 0,
   intensity: 0,
   loudness: 0,
 
@@ -50,7 +50,7 @@ export const Glottis = {
   runStep(noiseSource, lambda) {
     var timeStep = 1.0 / this.sampleRate;
     timeInWaveform += timeStep;
-    this.totalTime += timeStep;
+    totalTime += timeStep;
     if (timeInWaveform > this.waveformLength) {
       timeInWaveform -= this.waveformLength;
       this.waveformLength = Waveform.setup(oldFrequency, newFrequency, oldTenseness, newTenseness, lambda);
@@ -58,13 +58,16 @@ export const Glottis = {
     var out = Waveform.output(
       timeInWaveform / this.waveformLength
     ) * this.intensity * this.loudness;
+
+    // 呼吸
     var aspiration =
       this.intensity *
       (1 - Math.sqrt(UITenseness)) *
       this.getNoiseModulator() *
       noiseSource;
-    aspiration *= 0.2 + 0.02 * noise.simplex1(this.totalTime * 1.99);
+    aspiration *= 0.2 + 0.02 * noise.simplex1(totalTime * 1.99);
     out += aspiration;
+    
     return out;
   },
 
@@ -85,12 +88,12 @@ export const Glottis = {
 
   finishBlock: function () {
     const vibratoFrequency = 6;
-    let vibrato = 0.005 * Math.sin(2 * Math.PI * this.totalTime * vibratoFrequency);
-    vibrato += 0.02 * noise.simplex1(this.totalTime * 4.07);
-    vibrato += 0.04 * noise.simplex1(this.totalTime * 2.15);
+    let vibrato = 0.005 * Math.sin(2 * Math.PI * totalTime * vibratoFrequency);
+    vibrato += 0.02 * noise.simplex1(totalTime * 4.07);
+    vibrato += 0.04 * noise.simplex1(totalTime * 2.15);
     if (input.autoWobble) {
-      vibrato += 0.2 * noise.simplex1(this.totalTime * 0.98);
-      vibrato += 0.4 * noise.simplex1(this.totalTime * 0.5);
+      vibrato += 0.2 * noise.simplex1(totalTime * 0.98);
+      vibrato += 0.4 * noise.simplex1(totalTime * 0.5);
     }
     if (input.frequency > smoothFrequency)
       smoothFrequency = Math.min(
@@ -107,8 +110,8 @@ export const Glottis = {
     oldTenseness = newTenseness;
     newTenseness =
       UITenseness +
-      0.1 * noise.simplex1(this.totalTime * 0.46) +
-      0.05 * noise.simplex1(this.totalTime * 0.36);
+      0.1 * noise.simplex1(totalTime * 0.46) +
+      0.05 * noise.simplex1(totalTime * 0.36);
     if (!this.isTouched && input.alwaysVoice)
       newTenseness += (3 - UITenseness) * (1 - this.intensity);
 
